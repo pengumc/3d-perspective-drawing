@@ -17,18 +17,29 @@ class Screen(gtk.DrawingArea):
         cr.clip()
         self.draw(cr, *self.window.get_size())
 
+    def do_zoom(self, widget, event, data=None):
+        if event.direction == gtk.gdk.SCROLL_UP:
+            #zoom in
+            self.plane.z = self.plane.z + self.scale
+        else:
+            #zoom out       
+            self.plane.z = self.plane.z - self.scale
+
     def draw(self, cr, width, height):
         #clear
         cr.set_source_rgb(0.9, 0.9, 0.9)
         cr.rectangle(0, 0, width, height)
         cr.fill()
+        cr.set_source_rgb(0,0,0)
+        cr.move_to(20,20)
+        text = "viewplane z: {:.0f}".format(self.plane.z)
+        cr.show_text(text)
         if self.points is None:
             return()
         
         #loop through points
         midx = width/2
         midy = height/2
-        cr.set_source_rgb(0,0,0)
         cr.set_font_size(22)
         transformed = dict()
         #first transform all points to the view plane
@@ -58,6 +69,7 @@ class Screen(gtk.DrawingArea):
         tree = ElementTree.parse(filename)
         p = tree.getroot().findall("point")
         scale = float(tree.find("scale").text)
+        self.scale = scale
         self.points = []
         for point in p:
             #mandatory elements
@@ -82,6 +94,7 @@ class Screen(gtk.DrawingArea):
     def set_camera(self, x, y, z):
         if not hasattr(self, "camera"):
             self.camera = Point(x, y, z, "camera", None)
+            self.plane = Point(0,0,0,"viewplane", None)
         else:
             self.camera.x = x
             self.camera.y = y
@@ -97,9 +110,9 @@ class Screen(gtk.DrawingArea):
         z = point.z
         #let's keep the camera x=0, y=0 to make matters easy
         dydz = (y - self.camera.y) / (z - self.camera.z)
-        y = self.camera.y + dydz * -self.camera.z
+        y = self.camera.y + dydz * -(self.camera.z - self.plane.z)
         dxdz = (x - self.camera.x) / (z - self.camera.z)
-        x = self.camera.x + dxdz * -self.camera.z
+        x = self.camera.x + dxdz * -(self.camera.z - self.plane.z)
         return(Point(x ,y, 0.0,
              "2d " + point.name, point.connected))        
              
@@ -108,7 +121,7 @@ class Screen(gtk.DrawingArea):
 
     def rotate(self):
         #rotate all points
-        angles = rotation.Vector(0.02, 0.1, 0.01)
+        angles = rotation.Vector(0.02, 0.0, 0.0)
         R = rotation.Matrix()
         R.create_from_angles(angles)
         new_points = []
@@ -141,6 +154,9 @@ def run(Widget):
     widget.loadPoints("./points.xml")
     widget.set_camera(0,0, 500)
     widget.set_timer(50)
+
+    window.add_events(gtk.gdk.SCROLL_MASK)
+    window.connect("scroll-event", widget.do_zoom)
     window.add(widget)
     window.present()
     
