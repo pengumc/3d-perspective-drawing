@@ -24,6 +24,9 @@ class Screen(gtk.DrawingArea):
         else:
             #zoom out       
             self.plane.z = self.plane.z - self.scale
+        cr = self.window.cairo_create()            
+        self.draw(cr, 300,300)
+            
 
     def draw(self, cr, width, height):
         #clear
@@ -95,6 +98,7 @@ class Screen(gtk.DrawingArea):
         if not hasattr(self, "camera"):
             self.camera = Point(x, y, z, "camera", None)
             self.plane = Point(0,0,0,"viewplane", None)
+            self.
         else:
             self.camera.x = x
             self.camera.y = y
@@ -118,10 +122,29 @@ class Screen(gtk.DrawingArea):
              
     def set_timer(self, interval):
         gobject.timeout_add(interval, self.rotate)
+        
+    def do_rotate(self, widget, event, data=None):
+        key = gtk.gdk.keyval_name(event.keyval)
+        if key == "Up":
+            self.rotate(0.05, 0.0, 0.0)
+        elif key == "Down":
+            self.rotate(-0.05, 0.0, 0.0)
+        if key == "Right":
+            self.rotate(0.0, 0.05, 0.0)
+        elif key == "Left":
+            self.rotate(0.0, -0.05, 0.0)
+        if key == "Page_Up":
+            self.rotate(0.0, 0.0, 0.05)
+        elif key == "Page_Down":
+            self.rotate(0.0, 0.0, -0.05)
+        
 
-    def rotate(self):
+    def rotate(self, x=None, y=None, z=None):
         #rotate all points
-        angles = rotation.Vector(0.02, 0.0, 0.0)
+        if x is None or y is None or z is None:
+            angles = rotation.Vector(0.02, 0.0, 0.0)
+        else:
+            angles = rotation.Vector(x,y,z)
         R = rotation.Matrix()
         R.create_from_angles(angles)
         new_points = []
@@ -153,10 +176,11 @@ def run(Widget):
     widget.show()
     widget.loadPoints("./points.xml")
     widget.set_camera(0,0, 500)
-    widget.set_timer(50)
+#    widget.set_timer(50)
 
-    window.add_events(gtk.gdk.SCROLL_MASK)
+    window.add_events(gtk.gdk.SCROLL_MASK | gtk.gdk.KEY_PRESS)
     window.connect("scroll-event", widget.do_zoom)
+    window.connect("key-press-event", widget.do_rotate)
     window.add(widget)
     window.present()
     
