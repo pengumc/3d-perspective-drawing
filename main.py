@@ -3,6 +3,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk, gobject, cairo
 import rotation
+import math
 import xml.etree.ElementTree as ElementTree
 
 class Screen(gtk.DrawingArea):
@@ -39,10 +40,23 @@ class Screen(gtk.DrawingArea):
         cr.show_text(text)
         if self.points is None:
             return()
-        
-        #loop through points
         midx = width/2
         midy = height/2
+        #draw axis in blue
+        cr.set_source_rgb(0,0,1)
+        p = self.transform_to_2d(Point(1,0,0,"",""))
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        p = self.transform_to_2d(Point(0,1,0,"",""))
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        p = self.transform_to_2d(Point(0,0,1,"",""))
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        cr.stroke()
+        
+        #loop through points
+        cr.set_source_rgb(0,0,0)
         cr.set_font_size(22)
         transformed = dict()
         #first transform all points to the view plane
@@ -98,7 +112,6 @@ class Screen(gtk.DrawingArea):
         if not hasattr(self, "camera"):
             self.camera = Point(x, y, z, "camera", None)
             self.plane = Point(0,0,0,"viewplane", None)
-            self.
         else:
             self.camera.x = x
             self.camera.y = y
@@ -112,7 +125,8 @@ class Screen(gtk.DrawingArea):
         x = point.x
         y = point.y
         z = point.z
-        #let's keep the camera x=0, y=0 to make matters easy
+        #let's keep the viewplane parallel with the z axis
+        #it's makes things easier
         dydz = (y - self.camera.y) / (z - self.camera.z)
         y = self.camera.y + dydz * -(self.camera.z - self.plane.z)
         dxdz = (x - self.camera.x) / (z - self.camera.z)
@@ -125,18 +139,19 @@ class Screen(gtk.DrawingArea):
         
     def do_rotate(self, widget, event, data=None):
         key = gtk.gdk.keyval_name(event.keyval)
+        speed = math.pi/20
         if key == "Up":
-            self.rotate(0.05, 0.0, 0.0)
+            self.rotate(speed, 0.0, 0.0)
         elif key == "Down":
-            self.rotate(-0.05, 0.0, 0.0)
+            self.rotate(-speed, 0.0, 0.0)
         if key == "Right":
-            self.rotate(0.0, 0.05, 0.0)
+            self.rotate(0.0, speed, 0.0)
         elif key == "Left":
-            self.rotate(0.0, -0.05, 0.0)
+            self.rotate(0.0, -speed, 0.0)
         if key == "Page_Up":
-            self.rotate(0.0, 0.0, 0.05)
+            self.rotate(0.0, 0.0, speed)
         elif key == "Page_Down":
-            self.rotate(0.0, 0.0, -0.05)
+            self.rotate(0.0, 0.0, -speed)
         
 
     def rotate(self, x=None, y=None, z=None):
