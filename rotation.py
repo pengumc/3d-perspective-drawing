@@ -25,6 +25,11 @@ class Vector:
         self.x = self.x - vector.x
         self.y = self.y - vector.y
         self.z = self.z - vector.z
+        
+    def copy_from(self, vector):
+        self.x = vector.x
+        self.y = vector.y
+        self.z = vector.z
 
     def display(self):
         print("vector {0}: [{1:.3f}, {2:.3f}, {3:.3f}]".format(
@@ -39,8 +44,14 @@ class Matrix:
         self.array = [0 for i in range(0,9)]
         self.inverse = [0 for i in range(0,9)]
         self.name = name
+        self.base_angles = Vector(0,0,0,"base")
+
+    def update_with_angles(self, v):
+        self.base_angles.add_vector(v)
+        self.create_from_angles(self.base_angles)
 
     def create_from_angles(self, v):
+        self.base_angles.copy_from(v)
         ctheta = math.cos(v.x)
         cpsi = math.cos(v.y)
         cphi = math.cos(v.z)
@@ -67,24 +78,36 @@ class Matrix:
                 self.array[6], self.array[7], self.array[8]))
 
     def _generate_inverse(self):
-        self.inverse[0] = (self.array[4] * self.array[8] -
+        A = (self.array[4] * self.array[8] -
             self.array[5]*self.array[7])
-        self.inverse[1] = (self.array[5] * self.array[6] -
+        B = (self.array[5] * self.array[6] -
             self.array[3]*self.array[8])
-        self.inverse[2] = (self.array[4] * self.array[7] -
+        C = (self.array[3] * self.array[7] -
             self.array[4]*self.array[6])
-        self.inverse[3] = (self.array[2] * self.array[7] -
+        D = (self.array[2] * self.array[7] -
             self.array[1]*self.array[8])
-        self.inverse[4] = (self.array[0] * self.array[8] -
+        E = (self.array[0] * self.array[8] -
             self.array[2]*self.array[6])
-        self.inverse[5] = (self.array[6] * self.array[1] -
+        F = (self.array[6] * self.array[1] -
             self.array[0]*self.array[7])
-        self.inverse[6] = (self.array[1] * self.array[5] -
+        G = (self.array[1] * self.array[5] -
             self.array[2]*self.array[4])
-        self.inverse[7] = (self.array[2] * self.array[3] -
+        H = (self.array[2] * self.array[3] -
             self.array[0]*self.array[5])
-        self.inverse[8] = (self.array[0] * self.array[4] -
+        I = (self.array[0] * self.array[4] -
             self.array[1]*self.array[3])
+        det_reciproke = 1.0 / (self.array[0] * A + self.array[1] * B 
+            + self.array[2] * C)
+        self.inverse[0] = A * det_reciproke
+        self.inverse[1] = D * det_reciproke
+        self.inverse[2] = G * det_reciproke
+        self.inverse[3] = B * det_reciproke
+        self.inverse[4] = E * det_reciproke
+        self.inverse[5] = H * det_reciproke
+        self.inverse[6] = C * det_reciproke
+        self.inverse[7] = F * det_reciproke
+        self.inverse[8] = I * det_reciproke
+        
 
     def invert(self):
         temp = self.array
@@ -97,3 +120,12 @@ class Matrix:
         z = (self.array[6] * v.x + self.array[7] * v.y + self.array[8] * v.z)
         return(Vector(x, y, z, v.name + " * " + self.name))
 
+    def dot_product_inverse(self, v):
+        x = (self.inverse[0] * v.x + self.inverse[1] * v.y 
+            + self.inverse[2] * v.z)
+        y = (self.inverse[3] * v.x + self.inverse[4] * v.y 
+            + self.inverse[5] * v.z)
+        z = (self.inverse[6] * v.x + self.inverse[7] * v.y 
+            + self.inverse[8] * v.z)
+        return(Vector(x, y, z, v.name + " * " + self.name))
+    

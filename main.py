@@ -6,6 +6,10 @@ import rotation
 import math
 import xml.etree.ElementTree as ElementTree
 
+def dummy(x):
+    return(x)
+
+
 class Screen(gtk.DrawingArea):
 
 
@@ -28,6 +32,52 @@ class Screen(gtk.DrawingArea):
         cr = self.window.cairo_create()            
         self.draw(cr, 300,300)
             
+    def __init__(self):
+        gtk.DrawingArea.__init__(self);
+        self.scale = 0
+        self.points = []
+        self.camera = Point(0, 0, 0, "camera", None)
+        self.plane = Point(0,0,0,"viewplane", None)
+        start_angles = rotation.Vector(-3*math.pi/4, -math.pi/4, 0.0)
+        self.R = rotation.Matrix()
+        self.R.create_from_angles(start_angles)
+        self.base_R = rotation.Matrix()
+        self.base_R.create_from_angles(start_angles)
+
+
+    def draw_axis(self,cr, color, midx, midy, fixed=True):
+        axis_length = 2
+        if fixed:
+            rot = self.base_R.dot_product
+        else:
+            rot = dummy
+        cr.set_source_rgb(color[0], color[1], color[2])
+        p = self.transform_to_2d(rot(Point(axis_length,0,0)), not fixed)
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        cr.stroke()
+        cr.move_to(midx + p.x * self.scale - 5, midy+p.y * self.scale -10)
+        cr.set_source_rgb(color[0], color[1], color[2])
+        cr.show_text("x")
+        cr.stroke()
+        p = self.transform_to_2d(rot(Point(0,axis_length,0)), not fixed)
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        cr.stroke()
+        cr.move_to(midx + p.x * self.scale - 5, midy+p.y * self.scale -10)
+        cr.set_source_rgb(color[0], color[1], color[2])
+        cr.show_text("y")
+        cr.stroke()
+        p = self.transform_to_2d(rot(Point(0,0,axis_length)), not fixed)
+        cr.move_to(midx, midy)
+        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+        cr.stroke()
+        cr.move_to(midx + p.x * self.scale - 5, midy+p.y * self.scale -10)
+        cr.set_source_rgb(color[0], color[1], color[2])
+        cr.show_text("z")
+        cr.stroke()
+        
+                    
 
     def draw(self, cr, width, height):
         #clear
@@ -38,38 +88,24 @@ class Screen(gtk.DrawingArea):
         cr.move_to(20,20)
         text = "viewplane z: {:.0f}".format(self.plane.z)
         cr.show_text(text)
+        text = "angles: {:.2f}, {:.2f}, {:.2f}".format(
+                self.R.base_angles.x, self.R.base_angles.y, 
+                self.R.base_angles.z)
+        cr.move_to(20,30)
+        cr.show_text(text)
         if self.points is None:
             return()
         midx = width/2
         midy = height/2
-        #draw axis in blue
-        cr.set_source_rgb(0,0,1)
-        p = self.transform_to_2d(Point(1,0,0,"",""))
-        cr.move_to(midx, midy)
-        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
-        p = self.transform_to_2d(Point(0,1,0,"",""))
-        cr.move_to(midx, midy)
-        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
-        p = self.transform_to_2d(Point(0,0,1,"",""))
-        cr.move_to(midx, midy)
-        cr.rel_line_to(p.x * self.scale, p.y * self.scale)
-        cr.stroke()
+        #draw axis, fixed/non-fixed
+        self.draw_axis(cr, (0,0,1), midx, midy, True)
+        self.draw_axis(cr, (0,0.9,0), midx, midy, False)
         
         #loop through points
-        cr.set_source_rgb(0,0,0)
-        cr.set_font_size(22)
-        transformed = dict()
         #first transform all points to the view plane
-        for point in self.points:
-            p = self.transform_to_2d(point)
-            cr.rectangle(midx + p.x -3, midy + p.y -3, 6, 6)
-            cr.stroke()
-            cr.move_to(midx + p.x-5, midy+p.y-10)
-            cr.set_source_rgb(1,0,0)
-            cr.show_text(point.name)
-            transformed[point.name] = p
-            cr.set_source_rgb(0,0,0)
+        transformed = self.get_transformed_point_dict()
         #now connect the points
+        cr.set_source_rgb(0,0,0)
         for key in transformed:
             p = transformed[key]
             if p.connected is None:
@@ -80,14 +116,19 @@ class Screen(gtk.DrawingArea):
                 cr.move_to(midx + p.x, midy+ p.y)
                 cr.line_to(midx + p2.x, midy + p2.y)
                 cr.stroke()
-
+    
+    def get_transformed_point_dict(self):
+        transformed = dict()
+        for point in self.points:
+            p = self.transform_to_2d(point)
+            transformed[point.name] = p
+        return(transformed)
 
     def loadPoints(self, filename):
         tree = ElementTree.parse(filename)
         p = tree.getroot().findall("point")
         scale = float(tree.find("scale").text)
         self.scale = scale
-        self.points = []
         for point in p:
             #mandatory elements
             x = float(point.find("x").text)*scale
@@ -106,22 +147,23 @@ class Screen(gtk.DrawingArea):
                 connected = ""
             new_point = Point(x, y, z, name, connected)
             self.points.append(new_point)
-            #TODO add camera to points.xml
             
     def set_camera(self, x, y, z):
-        if not hasattr(self, "camera"):
-            self.camera = Point(x, y, z, "camera", None)
-            self.plane = Point(0,0,0,"viewplane", None)
-        else:
-            self.camera.x = x
-            self.camera.y = y
-            self.camera.z = z
+        self.camera.x = x
+        self.camera.y = y
+        self.camera.z = z
         print("camera set to [{:.1f}, {:.1f}, {:.1f}]".format(
             self.camera.x, self.camera.y, self.camera.z))
 
-    def transform_to_2d(self, point):
+    def transform_to_2d(self, point, rotate=True):
         #transform with perspective
-        #remember y => -y for drawing purposes
+        name = point.name
+        if hasattr(point, "connected"):
+            connected = point.connected
+        else:
+            connected = ""
+        if rotate:
+            point = self.R.dot_product(point)
         x = point.x
         y = point.y
         z = point.z
@@ -132,7 +174,7 @@ class Screen(gtk.DrawingArea):
         dxdz = (x - self.camera.x) / (z - self.camera.z)
         x = self.camera.x + dxdz * -(self.camera.z - self.plane.z)
         return(Point(x ,y, 0.0,
-             "2d " + point.name, point.connected))        
+             "2d " + name, connected))        
              
     def set_timer(self, interval):
         gobject.timeout_add(interval, self.rotate)
@@ -152,36 +194,22 @@ class Screen(gtk.DrawingArea):
             self.rotate(0.0, 0.0, speed)
         elif key == "Page_Down":
             self.rotate(0.0, 0.0, -speed)
-        
 
-    def rotate(self, x=None, y=None, z=None):
-        #rotate all points
-        if x is None or y is None or z is None:
-            angles = rotation.Vector(0.02, 0.0, 0.0)
-        else:
-            angles = rotation.Vector(x,y,z)
-        R = rotation.Matrix()
-        R.create_from_angles(angles)
-        new_points = []
-        for point in self.points:
-            rotated = R.dot_product(point)
-            new_points.append(Point(rotated.x, rotated.y, rotated.z,
-                point.name, point.connected))
-        self.points = new_points
+    def rotate(self, x, y, z):
+        self.R.update_with_angles(rotation.Vector(x,y,z))
         cr = self.window.cairo_create()
         self.draw(cr, 300,300)
         return(True)
+        
         
 
 class Point(rotation.Vector):
 
 
-    def __init__(self, x, y, z, name, connected):
+    def __init__(self, x, y, z, name="", connected=None):
         rotation.Vector.__init__(self, x, y, z, name)
         self.connected = connected
         
-        
-
 
 def run(Widget):
     window = gtk.Window()

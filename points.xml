@@ -2,89 +2,31 @@
     <scale>50</scale>
     <point>
         <name>A</name>
-        <x>-1</x>
-        <y>-1</y>
-        <z>1</z>
-        <connected>E,B</connected>
+        <x>-0.5</x>
+        <y>0</y>
+        <z>-0.5</z>
+        <connected>B</connected>
     </point>
     <point>
         <name>B</name>
-        <x>1</x>
-        <y>-1</y>
-        <z>1</z>
-        <connected>F</connected>
+        <x>0.5</x>
+        <y>0</y>
+        <z>-0.5</z>
+        <connected>C</connected>
     </point>
     <point>
         <name>C</name>
-        <x>1</x>
-        <y>1</y>
-        <z>1</z>
-        <connected>G,B,D</connected>
+        <x>0.5</x>
+        <y>0</y>
+        <z>0.5</z>
+        <connected>D</connected>
     </point>
     <point>
         <name>D</name>
-        <x>-1</x>
-        <y>1</y>
-        <z>1</z>
-        <connected>H,A</connected>
-    </point>
-    <point>
-        <name>E</name>
-        <x>-1</x>
-        <y>-1</y>
-        <z>-1</z>
-        <connected></connected>
-    </point>
-    <point>
-        <name>F</name>
-        <x>1</x>
-        <y>-1</y>
-        <z>-1</z>
-        <connected>E</connected>
-    </point>
-    <point>
-        <name>G</name>
-        <x>1</x>
-        <y>1</y>
-        <z>-1</z>
-        <connected>F,H</connected>
-    </point>
-    <point>
-        <name>H</name>
-        <x>-1</x>
-        <y>1</y>
-        <z>-1</z>
-        <connected>E</connected>
-    </point>
-
-    <point>
-        <name>0</name>
-        <x>0</x>
+        <x>-0.5</x>
         <y>0</y>
-        <z>0</z>
-        <connected></connected>
+        <z>0.5</z>
+        <connected>A</connected>
     </point>
-    <point>
-        <name>X</name>
-        <x>1</x>
-        <y>0</y>
-        <z>0</z>
-        <connected>0</connected>
-    </point>
-    <point>
-        <name>y</name>
-        <x>0</x>
-        <y>1</y>
-        <z>0</z>
-        <connected>0</connected>
-    </point>
-    <point>
-        <name>z</name>
-        <x>0</x>
-        <y>0</y>
-        <z>1</z>
-        <connected>0</connected>
-    </point>
-    
 
 </points>    
