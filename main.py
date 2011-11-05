@@ -38,7 +38,8 @@ class Screen(gtk.DrawingArea):
         self.points = []
         self.camera = Point(0, 0, 0, "camera", None)
         self.plane = Point(0,0,0,"viewplane", None)
-        start_angles = rotation.Vector(-3*math.pi/4, -math.pi/4, 0.0)
+        #start_angles = rotation.Vector(-3*math.pi/4, -math.pi/4, 0.0)
+        start_angles = rotation.Vector(0.0, 0.0, 0.0)
         self.R = rotation.Matrix()
         self.R.create_from_angles(start_angles)
         self.base_R = rotation.Matrix()
@@ -77,8 +78,6 @@ class Screen(gtk.DrawingArea):
         cr.show_text("z")
         cr.stroke()
         
-                    
-
     def draw(self, cr, width, height):
         #clear
         cr.set_source_rgb(0.9, 0.9, 0.9)
@@ -100,7 +99,6 @@ class Screen(gtk.DrawingArea):
         #draw axis, fixed/non-fixed
         self.draw_axis(cr, (0,0,1), midx, midy, True)
         self.draw_axis(cr, (0,0.9,0), midx, midy, False)
-        
         #loop through points
         #first transform all points to the view plane
         transformed = self.get_transformed_point_dict()
