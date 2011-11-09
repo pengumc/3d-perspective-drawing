@@ -40,7 +40,7 @@ class Screen(gtk.DrawingArea):
         self.plane = Point(0,0,0,"viewplane", None)
         #start_angles = rotation.Vector(-3*math.pi/4, -math.pi/4, 0.0)
         start_angles = rotation.Vector(0.0, 0.0, 0.0)
-        self.R = rotation.Matrix()
+        self.R = rotation.Matrix("R")
         self.R.create_from_angles(start_angles)
         self.base_R = rotation.Matrix()
         self.base_R.create_from_angles(start_angles)

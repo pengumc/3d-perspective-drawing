@@ -48,7 +48,17 @@ class Matrix:
 
     def update_with_angles(self, v):
         self.base_angles.add_vector(v)
-        self.create_from_angles(self.base_angles)
+        #self.create_from_angles(self.base_angles)
+        m = Matrix("added Rotation")
+        m.create_from_angles(v)
+        new_R = self.matrix_dot_product(m)
+        self.copy_values_from(new_R)
+
+    def copy_values_from(self, m):
+        for i in range(9):
+            self.array[i] = m.array[i]
+            
+        self._generate_inverse()
 
     def create_from_angles(self, v):
         self.base_angles.copy_from(v)
@@ -107,7 +117,12 @@ class Matrix:
         self.inverse[6] = C * det_reciproke
         self.inverse[7] = F * det_reciproke
         self.inverse[8] = I * det_reciproke
-        
+
+    def get_vector(self,n):        
+        return(Vector(
+            self.array[0+n],
+            self.array[3+n],
+            self.array[6+n]))
 
     def invert(self):
         temp = self.array
@@ -128,4 +143,24 @@ class Matrix:
         z = (self.inverse[6] * v.x + self.inverse[7] * v.y 
             + self.inverse[8] * v.z)
         return(Vector(x, y, z, v.name + " * " + self.name))
+        
+    def matrix_dot_product(self, m):
+        #returns matrix * m
+        result = Matrix("dot_product " + m.name)
+        for n in range(3):
+            v = m.get_vector(n)
+            product = self.dot_product(v)
+            result.array[0+n] = product.x
+            result.array[3+n] = product.y
+            result.array[6+n] = product.z
+        return(result)
+        
+        
+    
+    
+    
+    
+    
+    
+         
     
