@@ -30,7 +30,7 @@ class Screen(gtk.DrawingArea):
             #zoom out       
             self.plane.z = self.plane.z - self.scale
         cr = self.window.cairo_create()            
-        self.draw(cr, 300,300)
+        self.draw(cr, *self.window.get_size())
             
     def __init__(self):
         gtk.DrawingArea.__init__(self);
@@ -44,7 +44,14 @@ class Screen(gtk.DrawingArea):
         self.R.create_from_angles(start_angles)
         self.base_R = rotation.Matrix()
         self.base_R.create_from_angles(start_angles)
-
+    
+    def draw_R(self, cr, midx, midy):
+        for i in range(3):
+            p = self.transform_to_2d(self.R.get_vector(i))    
+            cr.move_to(midx, midy)
+            cr.rel_line_to(p.x * self.scale, p.y * self.scale)
+            cr.stroke()
+         
 
     def draw_axis(self,cr, color, midx, midy, fixed=True):
         axis_length = 2
@@ -196,7 +203,7 @@ class Screen(gtk.DrawingArea):
     def rotate(self, x, y, z):
         self.R.update_with_angles(rotation.Vector(x,y,z))
         cr = self.window.cairo_create()
-        self.draw(cr, 300,300)
+        self.draw(cr, *self.window.get_size())
         return(True)
         
         

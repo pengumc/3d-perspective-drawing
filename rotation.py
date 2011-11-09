@@ -47,13 +47,14 @@ class Matrix:
         self.base_angles = Vector(0,0,0,"base")
 
     def update_with_angles(self, v):
-        self.base_angles.add_vector(v)
         #self.create_from_angles(self.base_angles)
         m = Matrix("added Rotation")
         m.create_from_angles(v)
         new_R = self.matrix_dot_product(m)
         self.copy_values_from(new_R)
-
+        #self.base_angles = new_R.dot_product(self.base_angles)
+        self.base_angles = self.get_angles()
+        
     def copy_values_from(self, m):
         for i in range(9):
             self.array[i] = m.array[i]
@@ -154,7 +155,18 @@ class Matrix:
             result.array[3+n] = product.y
             result.array[6+n] = product.z
         return(result)
-        
+    
+    def get_angles(self):
+        #returns vector with v[i] = rotation around i axis 
+        phi = math.atan2(self.array[6], self.array[7])
+        if self.array[8] >= 1.0:
+            theta = math.acos(0.999999)
+        elif self.array[8] <= -1.0:
+            theta = math.acos(-0.999999)
+        else:
+            theta = math.acos(self.array[8])
+        psi = -math.atan2(self.array[2], self.array[5])
+        return(Vector(phi, theta, psi, "angles"))
         
     
     
