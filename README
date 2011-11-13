@@ -1,3 +1,7 @@
+A 3d representation of some points loaded from an xml file
+Intended as visual aid for calculating the orientation of 
+a 3-axis accelerometer
+
 keys:
 up down left right pageup pagedown scroll-up  scroll-down
 
