@@ -5,6 +5,7 @@
         <x>-1</x>
         <y>-1</y>
         <z>1</z>
+        <color>1,0,0</color>
         <connected>E,B</connected>
     </point>
     <point>
