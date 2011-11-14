@@ -79,9 +79,11 @@ class PointCloud:
         z = point.z
         #let's keep the viewplane parallel with the z axis
         #it's makes things easier
-        dydz = (y - self.camera.y) / (z - self.camera.z)
+        dz = z - self.camera.z
+        if dz == 0: dz = 0.001
+        dydz = (y - self.camera.y) / (dz)
         y = self.camera.y + dydz * -(self.camera.z - self.plane.z)
-        dxdz = (x - self.camera.x) / (z - self.camera.z)
+        dxdz = (x - self.camera.x) / (dz)
         x = self.camera.x + dxdz * -(self.camera.z - self.plane.z)
         return(Point(x ,y, 0.0,
              "2d " + name, connected, color))        
@@ -101,6 +103,9 @@ class PointCloud:
         self.transformed = self.get_transformed_point_dict()        
         return(True)
 
+    def reset_rotation(self):
+        self.R.create_from_angles(rotation.Vector(0,0,0))
+        self.transformed = self.get_transformed_point_dict()        
     
 
 class Point(rotation.Vector):
@@ -113,4 +118,5 @@ class Point(rotation.Vector):
             self.color = color
         else:
             self.color = [0,0,0]
+
 

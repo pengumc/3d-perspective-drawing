@@ -4,6 +4,9 @@ import gtk, gobject, cairo
 import pointcloud
 import view
 import math
+import usbdev
+
+USB_TIMEOUT = 50
 
 class Controller:
 
@@ -12,9 +15,39 @@ class Controller:
         self.point_cloud = pointcloud.PointCloud("points.xml")
         self.gui = view.Screen()
         self.connect_signals()
-        
+        self.usbdev = usbdev.UsbDev()
+        self.acc_point_list = [
+            pointcloud.Point(0, 0, 0, "Acc0", "AccX,AccY,AccZ", [1,0,0]),
+             pointcloud.Point(0, 0, 0, "AccX"),
+             pointcloud.Point(0, 0, 0, "AccY"),
+             pointcloud.Point(0, 0, 0, "AccZ"),
+             pointcloud.Point(0, 0, 0, "AccVector", "Acc0", [0,0.5,0.5])]
+   
     def connect_signals(self):
         self.connect_inputdev()
+        gobject.timeout_add(USB_TIMEOUT, self.timeout)
+        
+    def timeout(self):
+        self.usbdev.update_adc()
+        adc = self.usbdev.get_adc_int()
+        x = adc[0] - 128
+        y = adc[2] - 128
+        z = adc[1] - 128
+        self.acc_point_list[1].x = x
+        self.acc_point_list[2].y = y
+        self.acc_point_list[3].z = z
+        self.acc_point_list[4].x = x
+        self.acc_point_list[4].y = y
+        self.acc_point_list[4].z = z
+        psi = math.acos(x / (math.sqrt(x*x + y*y)))
+        phi = math.asin(z / (math.sqrt(z*z + y*y)))
+        #print(adc)
+        self.redraw()
+        self.gui.draw_text("{:.3f}, {:.3f}".format(phi, psi))
+        self.gui.add_to_drawing(self.point_cloud.get_transformed_point_dict(
+            self.acc_point_list))
+        return(True)
+        
 
     def run(self):
         self.gui.start()
@@ -30,14 +63,18 @@ class Controller:
             self.rotate(speed, 0.0, 0.0)
         elif key == "Down":
             self.rotate(-speed, 0.0, 0.0)
-        if key == "Right":
+        elif key == "Right":
             self.rotate(0.0, speed, 0.0)
         elif key == "Left":
             self.rotate(0.0, -speed, 0.0)
-        if key == "Page_Up":
+        elif key == "Page_Up":
             self.rotate(0.0, 0.0, speed)
         elif key == "Page_Down":
             self.rotate(0.0, 0.0, -speed)
+        elif key == "Home":
+            self.point_cloud.reset_rotation()
+            self.redraw()
+        
 
     def rotate(self, x, y, z):
         self.point_cloud.rotate(x, y, z)

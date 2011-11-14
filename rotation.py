@@ -16,6 +16,14 @@ class Vector:
             math.pow(self.y, 2)+
             math.pow(self.z, 2)))
 
+    def cross_product(self, v):
+        x = v.y * self.z - v.z * self.y
+        y = v.z * self.x - v.x * self.z
+        z = v.x * self.y - v.y * self.x
+        self.x = x
+        self.y = y
+        self.z = z
+
     def add_vector(self, vector):
         self.x = self.x + vector.x
         self.y = self.y + vector.y

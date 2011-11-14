@@ -19,8 +19,15 @@ class Screen:
     
     def redraw(self, pointdict):
         cr = self.drawing_area.get_cr()
-        self.drawing_area.draw(cr, pointdict, *self.window.get_size())
+        self.drawing_area.draw(cr, pointdict, True,*self.window.get_size())
     
+    def add_to_drawing(self, pointdict):
+        cr = self.drawing_area.get_cr()
+        self.drawing_area.draw(cr, pointdict, False, *self.window.get_size())
+        
+    def draw_text(self, text):
+        cr = self.drawing_area.get_cr()
+        self.drawing_area.draw_text(cr, text)
         
 class DrawArea(gtk.DrawingArea):
 
@@ -38,11 +45,11 @@ class DrawArea(gtk.DrawingArea):
             cr.clip()
         return(cr)
         
-    def draw(self, cr, pointdict, width, height):
-        #clear
-        cr.set_source_rgb(1, 1, 1)
-        cr.rectangle(0, 0, width, height)
-        cr.fill()
+    def draw(self, cr, pointdict, clear, width, height):
+        if clear:
+            cr.set_source_rgb(1, 1, 1)
+            cr.rectangle(0, 0, width, height)
+            cr.fill()
         if pointdict:
             self.draw_from_dict(cr, width/2, height/2, pointdict)
 
@@ -50,7 +57,7 @@ class DrawArea(gtk.DrawingArea):
         for key in pointdict:
             p = pointdict[key]
             cr.set_source_rgb(p.color[0], p.color[1], p.color[2])
-            if p.connected is None:
+            if p.connected is None or p.connected == "":
                 continue
             connected = p.connected.split(',')
             for c in connected:
@@ -60,4 +67,11 @@ class DrawArea(gtk.DrawingArea):
                 cr.stroke()
 
     
-        
+    def draw_text(self, cr, text):
+        cr.rectangle(0, 0, 150, 40)
+        cr.set_source_rgb(0.5, 0.5, 0.5)
+        cr.fill()
+        cr.set_source_rgb(0,0,0)
+        cr.move_to(0,22)
+        cr.show_text(text)
+

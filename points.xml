@@ -5,7 +5,6 @@
         <x>-1</x>
         <y>-1</y>
         <z>1</z>
-        <color>1,0,0</color>
         <connected>E,B</connected>
     </point>
     <point>
@@ -64,5 +63,32 @@
         <y>0</y>
         <z>0</z>
         <connected></connected>
+    </point>
+    <!-- axis -->
+    <point>
+        <name>origin</name>
+        <x>0</x>
+        <y>0</y>
+        <z>0</z>
+        <color>0,1,0</color>
+        <connected>xaxis,yaxis,zaxis</connected>
+    </point>
+    <point>
+        <name>xaxis</name>
+        <x>10</x>
+        <y>-0</y>
+        <z>0</z>
+    </point>
+    <point>
+        <name>yaxis</name>
+        <x>0</x>
+        <y>10</y>
+        <z>0</z>
+    </point>
+    <point>
+        <name>zaxis</name>
+        <x>0</x>
+        <y>0</y>
+        <z>10</z>
     </point>
 </points>    
