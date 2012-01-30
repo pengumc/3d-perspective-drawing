@@ -103,10 +103,17 @@ class PointCloud:
         self.transformed = self.get_transformed_point_dict()        
         return(True)
 
+    #return rotation to 0
     def reset_rotation(self):
         self.R.create_from_angles(rotation.Vector(0,0,0))
         self.transformed = self.get_transformed_point_dict()        
     
+    #set rotation to x y z
+    def rotate_abs(self, x, y, z):
+        self.R.create_from_angles(rotation.Vector(x,y,z))
+        self.transformed = self.get_transformed_point_dict()        
+        return(True)
+
 
 class Point(rotation.Vector):
 

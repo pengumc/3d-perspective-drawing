@@ -6,6 +6,9 @@ import view
 import math
 import usbdev
 
+#there are some function that require/use gtk, they're marked
+#with #GTK
+
 USB_TIMEOUT = 50
 
 class Controller:
@@ -25,37 +28,43 @@ class Controller:
    
     def connect_signals(self):
         self.connect_inputdev()
+        #GTK        
         gobject.timeout_add(USB_TIMEOUT, self.timeout)
         
     def timeout(self):
+        #sample new values
         self.usbdev.update_adc()
         adc = self.usbdev.get_adc_int()
-        x = adc[0] - 128
-        y = adc[2] - 128
-        z = adc[1] - 128
+        x = adc[0] - usbdev.UsbDev.ADC_MID
+        y = adc[2] - usbdev.UsbDev.ADC_MID
+        z = adc[1] - usbdev.UsbDev.ADC_MID
+        #set points for accelerometer output drawing
         self.acc_point_list[1].x = x
         self.acc_point_list[2].y = y
         self.acc_point_list[3].z = z
         self.acc_point_list[4].x = x
         self.acc_point_list[4].y = y
         self.acc_point_list[4].z = z
-        psi = math.acos(x / (math.sqrt(x*x + y*y)))
-        phi = math.asin(z / (math.sqrt(z*z + y*y)))
-        #print(adc)
+        #get orientation and rotate the pointcloud accordingly
+        ori = self.usbdev.get_orientation()
+        self.point_cloud.rotate_abs(ori[0], ori[1], ori[2])
         self.redraw()
-        self.gui.draw_text("{:.3f}, {:.3f}".format(phi, psi))
+        #draw some text and add the accelerometer drawing
+        self.gui.draw_text("{:.3f}, {:.3f}, {:.3f}".format(
+            ori[0], ori[1], ori[2]))
         self.gui.add_to_drawing(self.point_cloud.get_transformed_point_dict(
             self.acc_point_list))
         return(True)
         
-
     def run(self):
         self.gui.start()
+        #GTK
         gtk.main()
 
     def redraw(self):
         self.gui.redraw(self.point_cloud.transformed)
 
+    #GTK    
     def do_keyboard(self, widget, event, data=None):
         key = gtk.gdk.keyval_name(event.keyval)
         speed = math.pi/20
@@ -90,7 +99,9 @@ class Controller:
     def do_expose(self, event, data=None):
         self.redraw()
     
+    
     def connect_inputdev(self):
+        #GTK 
         self.gui.window.add_events(gtk.gdk.SCROLL_MASK | gtk.gdk.KEY_PRESS)
         self.gui.window.connect("scroll-event", self.do_scroll)
         self.gui.window.connect("key-press-event", self.do_keyboard)

@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import usb.core
+import math
 
 #usb control constants
 USB_TYPE_VENDOR = (2<<5)
@@ -7,11 +8,14 @@ USB_RECIP_DEVICE = 0
 USB_ENDPOINT_IN = (1<<7)
 USB_ENDPOINT_OUT= (0<<7)
 
-KALMAN_SZ = 1
-KALMAN_SW = 0.1
+#these should also depend on the sample rate.. but they don't
+#values are by trial and error, much room for improvement
+KALMAN_SZ = 0.3
+KALMAN_SW = 0.02
 
 class UsbDev:
-
+    
+    ADC_MID = 127
 
     def __init__(self):
         self._dev = None
@@ -43,7 +47,22 @@ class UsbDev:
         for i in range(3): self.filters[i].step(int(self.adc[i]))
     
     def get_adc_int(self):
-        return([self.filters[0].x, self.filters[1].x, self.filters[2].x])
+        ret = [self.filters[i].x for i in range(3)]
+        for i in range(3):
+            if ret[i] == 0.0: ret[i] = 0.0000001
+        return(ret)
+
+    def get_orientation(self):
+        #Ax..z are as specified on the accelerometer
+        A = self.get_adc_int()
+        Ax = (A[0] - self.ADC_MID)
+        Ay = (A[1] - self.ADC_MID)
+        Az = (A[2] - self.ADC_MID)
+        
+        phi = math.atan(Ay / math.sqrt(Ax*Ax + Az*Az))#around Ax, our x.
+        theta = math.atan(math.sqrt(Ax*Ax + Ay*Ay)/Az)#around Az, our y
+        rho = math.atan(Ax / math.sqrt(Ay*Ay + Az*Az))#around Ay, our z.
+        return([-phi, 0.0, -rho])
 
 
 class Kalman:
