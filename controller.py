@@ -4,7 +4,12 @@ import gtk, gobject, cairo
 import pointcloud
 import view
 import math
-import usbdev
+usbdev_failed = False
+try:
+    import usbdev 
+except Exception as e:
+    print(e)
+    usbdev_failed = True
 
 #there are some function that require/use gtk, they're marked
 #with #GTK
@@ -14,11 +19,16 @@ USB_TIMEOUT = 50
 class Controller:
 
 
-    def __init__(self):
+    def __init__(self, accelerometer=False):
+        self.accelerometer = accelerometer
+        if accelerometer:
+            if usbdev_failed:
+                print('failed to load usb module, exiting...')
+                exit()
+            self.usbdev = usbdev.UsbDev()
         self.point_cloud = pointcloud.PointCloud("points.xml")
         self.gui = view.Screen()
         self.connect_signals()
-        self.usbdev = usbdev.UsbDev()
         self.acc_point_list = [
             pointcloud.Point(0, 0, 0, "Acc0", "AccX,AccY,AccZ", [1,0,0]),
              pointcloud.Point(0, 0, 0, "AccX"),
@@ -29,7 +39,9 @@ class Controller:
     def connect_signals(self):
         self.connect_inputdev()
         #GTK        
-        gobject.timeout_add(USB_TIMEOUT, self.timeout)
+        if self.accelerometer:
+            #timeout is for accelerometer stuff only
+            gobject.timeout_add(USB_TIMEOUT, self.timeout)
         
     def timeout(self):
         #sample new values
